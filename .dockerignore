@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+*.md
+bin/
+tmp/
+coverage.out
+coverage.html
+*.exe
+*.log
+.DS_Store

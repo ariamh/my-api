@@ -1,0 +1,1361 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>api: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/ariam/my-api/cmd/api/main.go (0.0%)</option>
+				
+				<option value="file1">github.com/ariam/my-api/internal/config/config.go (0.0%)</option>
+				
+				<option value="file2">github.com/ariam/my-api/internal/config/database.go (0.0%)</option>
+				
+				<option value="file3">github.com/ariam/my-api/internal/config/migration.go (0.0%)</option>
+				
+				<option value="file4">github.com/ariam/my-api/internal/handler/auth_handler.go (0.0%)</option>
+				
+				<option value="file5">github.com/ariam/my-api/internal/handler/user_handler.go (37.5%)</option>
+				
+				<option value="file6">github.com/ariam/my-api/internal/middleware/auth.go (0.0%)</option>
+				
+				<option value="file7">github.com/ariam/my-api/internal/middleware/logger.go (0.0%)</option>
+				
+				<option value="file8">github.com/ariam/my-api/internal/middleware/security.go (0.0%)</option>
+				
+				<option value="file9">github.com/ariam/my-api/internal/model/base.go (0.0%)</option>
+				
+				<option value="file10">github.com/ariam/my-api/internal/model/user.go (0.0%)</option>
+				
+				<option value="file11">github.com/ariam/my-api/internal/repository/repository.go (0.0%)</option>
+				
+				<option value="file12">github.com/ariam/my-api/internal/repository/user_repository.go (0.0%)</option>
+				
+				<option value="file13">github.com/ariam/my-api/internal/router/router.go (0.0%)</option>
+				
+				<option value="file14">github.com/ariam/my-api/internal/service/auth_service.go (0.0%)</option>
+				
+				<option value="file15">github.com/ariam/my-api/internal/service/user_service.go (48.8%)</option>
+				
+				<option value="file16">github.com/ariam/my-api/pkg/jwt/jwt.go (87.5%)</option>
+				
+				<option value="file17">github.com/ariam/my-api/pkg/logger/logger.go (0.0%)</option>
+				
+				<option value="file18">github.com/ariam/my-api/pkg/response/response.go (0.0%)</option>
+				
+				<option value="file19">github.com/ariam/my-api/pkg/validator/validator.go (76.2%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "os"
+        "os/signal"
+        "syscall"
+
+        "github.com/ariam/my-api/internal/config"
+        "github.com/ariam/my-api/internal/middleware"
+        "github.com/ariam/my-api/internal/router"
+        "github.com/ariam/my-api/pkg/jwt"
+        "github.com/ariam/my-api/pkg/logger"
+        "github.com/ariam/my-api/pkg/response"
+        "github.com/ariam/my-api/pkg/validator"
+
+        "github.com/gofiber/fiber/v2"
+        "go.uber.org/zap"
+)
+
+func main() <span class="cov0" title="0">{
+        cfg := config.Load()
+
+        logger.Init(cfg.App.Env)
+        defer logger.Sync()
+
+        validator.Init()
+
+        db, err := config.NewDatabase(&amp;cfg.DB, cfg.App.Env)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Database connection failed", zap.Error(err))
+        }</span>
+        <span class="cov0" title="0">defer config.CloseDatabase(db)
+
+        if err := config.RunMigration(db); err != nil </span><span class="cov0" title="0">{
+                logger.Fatal("Migration failed", zap.Error(err))
+        }</span>
+
+        <span class="cov0" title="0">jwtManager := jwt.NewJWTManager(cfg.JWT.Secret, cfg.JWT.ExpireHours)
+
+        app := fiber.New(fiber.Config{
+                AppName:      cfg.App.Name,
+                ErrorHandler: customErrorHandler,
+        })
+
+        middleware.SetupSecurity(app, cfg.App.Env)
+        app.Use(middleware.RequestLogger())
+
+        app.Get("/health", func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                sqlDB, _ := db.DB()
+                dbStatus := "ok"
+                if err := sqlDB.Ping(); err != nil </span><span class="cov0" title="0">{
+                        dbStatus = "error"
+                }</span>
+
+                <span class="cov0" title="0">return response.Success(c, fiber.Map{
+                        "status":   "ok",
+                        "env":      cfg.App.Env,
+                        "database": dbStatus,
+                })</span>
+        })
+
+        <span class="cov0" title="0">router.Setup(app, db, jwtManager)
+
+        go func() </span><span class="cov0" title="0">{
+                if err := app.Listen(":" + cfg.App.Port); err != nil </span><span class="cov0" title="0">{
+                        logger.Fatal("Server error", zap.Error(err))
+                }</span>
+        }()
+
+        <span class="cov0" title="0">logger.Info("Server started", zap.String("port", cfg.App.Port))
+
+        quit := make(chan os.Signal, 1)
+        signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+        &lt;-quit
+
+        logger.Info("Shutting down server...")
+        if err := app.Shutdown(); err != nil </span><span class="cov0" title="0">{
+                logger.Error("Server shutdown error", zap.Error(err))
+        }</span>
+}
+
+func customErrorHandler(c *fiber.Ctx, err error) error <span class="cov0" title="0">{
+        code := fiber.StatusInternalServerError
+
+        if e, ok := err.(*fiber.Error); ok </span><span class="cov0" title="0">{
+                code = e.Code
+        }</span>
+
+        <span class="cov0" title="0">logger.Error("Unhandled error",
+                zap.Error(err),
+                zap.String("path", c.Path()),
+                zap.String("method", c.Method()),
+        )
+
+        return c.Status(code).JSON(fiber.Map{
+                "success": false,
+                "error":   err.Error(),
+        })</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package config
+
+import (
+        "log"
+        "os"
+        "strconv"
+
+        "github.com/joho/godotenv"
+)
+
+type Config struct {
+        App AppConfig
+        DB  DBConfig
+        JWT JWTConfig
+}
+
+type AppConfig struct {
+        Env  string
+        Port string
+        Name string
+}
+
+type DBConfig struct {
+        Host     string
+        Port     string
+        User     string
+        Password string
+        Name     string
+}
+
+type JWTConfig struct {
+        Secret      string
+        ExpireHours int
+}
+
+func Load() *Config <span class="cov0" title="0">{
+        if err := godotenv.Load(); err != nil </span><span class="cov0" title="0">{
+                log.Println("No .env file found, using system environment")
+        }</span>
+
+        <span class="cov0" title="0">return &amp;Config{
+                App: AppConfig{
+                        Env:  getEnv("APP_ENV", "development"),
+                        Port: getEnv("APP_PORT", "3000"),
+                        Name: getEnv("APP_NAME", "my-api"),
+                },
+                DB: DBConfig{
+                        Host:     getEnv("DB_HOST", "localhost"),
+                        Port:     getEnv("DB_PORT", "5432"),
+                        User:     getEnv("DB_USER", "postgres"),
+                        Password: getEnv("DB_PASSWORD", ""),
+                        Name:     getEnv("DB_NAME", "mydb"),
+                },
+                JWT: JWTConfig{
+                        Secret:      getEnv("JWT_SECRET", ""),
+                        ExpireHours: getEnvInt("JWT_EXPIRE_HOURS", 24),
+                },
+        }</span>
+}
+
+func getEnv(key, fallback string) string <span class="cov0" title="0">{
+        if val := os.Getenv(key); val != "" </span><span class="cov0" title="0">{
+                return val
+        }</span>
+        <span class="cov0" title="0">return fallback</span>
+}
+
+func getEnvInt(key string, fallback int) int <span class="cov0" title="0">{
+        if val := os.Getenv(key); val != "" </span><span class="cov0" title="0">{
+                if i, err := strconv.Atoi(val); err == nil </span><span class="cov0" title="0">{
+                        return i
+                }</span>
+        }
+        <span class="cov0" title="0">return fallback</span>
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package config
+
+import (
+        "fmt"
+        "time"
+
+        "github.com/ariam/my-api/pkg/logger"
+        "go.uber.org/zap"
+        "gorm.io/driver/postgres"
+        "gorm.io/gorm"
+        gormlogger "gorm.io/gorm/logger"
+)
+
+func NewDatabase(cfg *DBConfig, env string) (*gorm.DB, error) <span class="cov0" title="0">{
+        dsn := fmt.Sprintf(
+                "host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
+                cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name,
+        )
+
+        logLevel := gormlogger.Silent
+        if env == "development" </span><span class="cov0" title="0">{
+                logLevel = gormlogger.Info
+        }</span>
+
+        <span class="cov0" title="0">db, err := gorm.Open(postgres.Open(dsn), &amp;gorm.Config{
+                Logger: gormlogger.Default.LogMode(logLevel),
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to connect database: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">sqlDB, err := db.DB()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to get database instance: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">sqlDB.SetMaxIdleConns(10)
+        sqlDB.SetMaxOpenConns(100)
+        sqlDB.SetConnMaxLifetime(time.Hour)
+
+        logger.Info("Database connected", zap.String("host", cfg.Host), zap.String("database", cfg.Name))
+
+        return db, nil</span>
+}
+
+func CloseDatabase(db *gorm.DB) <span class="cov0" title="0">{
+        sqlDB, err := db.DB()
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error("Failed to get database instance", zap.Error(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">if err := sqlDB.Close(); err != nil </span><span class="cov0" title="0">{
+                logger.Error("Failed to close database", zap.Error(err))
+                return
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Database connection closed")</span>
+}</pre>
+		
+		<pre class="file" id="file3" style="display: none">package config
+
+import (
+        "github.com/ariam/my-api/internal/model"
+        "github.com/ariam/my-api/pkg/logger"
+        "go.uber.org/zap"
+        "gorm.io/gorm"
+)
+
+func RunMigration(db *gorm.DB) error <span class="cov0" title="0">{
+        logger.Info("Running database migrations...")
+
+        err := db.AutoMigrate(
+                &amp;model.User{},
+        )
+
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error("Migration failed", zap.Error(err))
+                return err
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Database migrations completed")
+        return nil</span>
+}</pre>
+		
+		<pre class="file" id="file4" style="display: none">package handler
+
+import (
+        "errors"
+
+        "github.com/ariam/my-api/internal/service"
+        "github.com/ariam/my-api/pkg/response"
+        "github.com/ariam/my-api/pkg/validator"
+        "github.com/gofiber/fiber/v2"
+)
+
+type AuthHandler struct {
+        authService service.AuthService
+}
+
+func NewAuthHandler(authService service.AuthService) *AuthHandler <span class="cov0" title="0">{
+        return &amp;AuthHandler{authService: authService}
+}</span>
+
+func (h *AuthHandler) Login(c *fiber.Ctx) error <span class="cov0" title="0">{
+        var input service.LoginInput
+
+        if err := c.BodyParser(&amp;input); err != nil </span><span class="cov0" title="0">{
+                return response.BadRequest(c, "Invalid request body")
+        }</span>
+
+        <span class="cov0" title="0">if errs := validator.Validate(&amp;input); len(errs) &gt; 0 </span><span class="cov0" title="0">{
+                return response.ValidationError(c, errs)
+        }</span>
+
+        <span class="cov0" title="0">result, err := h.authService.Login(c.Context(), &amp;input)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, service.ErrInvalidCredentials) </span><span class="cov0" title="0">{
+                        return response.Unauthorized(c, "Invalid email or password")
+                }</span>
+                <span class="cov0" title="0">return response.InternalServerError(c, "Login failed")</span>
+        }
+
+        <span class="cov0" title="0">return response.Success(c, result)</span>
+}
+
+func (h *AuthHandler) Me(c *fiber.Ctx) error <span class="cov0" title="0">{
+        return response.Success(c, fiber.Map{
+                "user_id": c.Locals("user_id"),
+                "email":   c.Locals("email"),
+                "role":    c.Locals("role"),
+        })
+}</pre>
+		
+		<pre class="file" id="file5" style="display: none">package handler
+
+import (
+        "errors"
+        "strconv"
+
+        "github.com/ariam/my-api/internal/service"
+        "github.com/ariam/my-api/pkg/response"
+        "github.com/ariam/my-api/pkg/validator"
+        "github.com/gofiber/fiber/v2"
+)
+
+type UserHandler struct {
+        userService service.UserService
+}
+
+func NewUserHandler(userService service.UserService) *UserHandler <span class="cov8" title="1">{
+        return &amp;UserHandler{userService: userService}
+}</span>
+
+func (h *UserHandler) Create(c *fiber.Ctx) error <span class="cov8" title="1">{
+        var input service.CreateUserInput
+
+        if err := c.BodyParser(&amp;input); err != nil </span><span class="cov0" title="0">{
+                return response.BadRequest(c, "Invalid request body")
+        }</span>
+
+        <span class="cov8" title="1">if errs := validator.Validate(&amp;input); len(errs) &gt; 0 </span><span class="cov8" title="1">{
+                return response.ValidationError(c, errs)
+        }</span>
+
+        <span class="cov8" title="1">user, err := h.userService.Create(c.Context(), &amp;input)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, service.ErrEmailAlreadyExists) </span><span class="cov0" title="0">{
+                        return response.BadRequest(c, err.Error())
+                }</span>
+                <span class="cov0" title="0">return response.InternalServerError(c, "Failed to create user")</span>
+        }
+
+        <span class="cov8" title="1">return response.Created(c, user)</span>
+}
+
+func (h *UserHandler) FindByID(c *fiber.Ctx) error <span class="cov8" title="1">{
+        id := c.Params("id")
+
+        user, err := h.userService.FindByID(c.Context(), id)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, service.ErrUserNotFound) </span><span class="cov8" title="1">{
+                        return response.NotFound(c, err.Error())
+                }</span>
+                <span class="cov0" title="0">return response.InternalServerError(c, "Failed to fetch user")</span>
+        }
+
+        <span class="cov8" title="1">return response.Success(c, user)</span>
+}
+
+func (h *UserHandler) FindAll(c *fiber.Ctx) error <span class="cov0" title="0">{
+        page, _ := strconv.Atoi(c.Query("page", "1"))
+        perPage, _ := strconv.Atoi(c.Query("per_page", "10"))
+
+        if page &lt; 1 </span><span class="cov0" title="0">{
+                page = 1
+        }</span>
+        <span class="cov0" title="0">if perPage &lt; 1 || perPage &gt; 100 </span><span class="cov0" title="0">{
+                perPage = 10
+        }</span>
+
+        <span class="cov0" title="0">users, total, err := h.userService.FindAll(c.Context(), page, perPage)
+        if err != nil </span><span class="cov0" title="0">{
+                return response.InternalServerError(c, "Failed to fetch users")
+        }</span>
+
+        <span class="cov0" title="0">return response.Paginated(c, users, total, page, perPage)</span>
+}
+
+func (h *UserHandler) Update(c *fiber.Ctx) error <span class="cov0" title="0">{
+        id := c.Params("id")
+
+        var input service.UpdateUserInput
+        if err := c.BodyParser(&amp;input); err != nil </span><span class="cov0" title="0">{
+                return response.BadRequest(c, "Invalid request body")
+        }</span>
+
+        <span class="cov0" title="0">if errs := validator.Validate(&amp;input); len(errs) &gt; 0 </span><span class="cov0" title="0">{
+                return response.ValidationError(c, errs)
+        }</span>
+
+        <span class="cov0" title="0">user, err := h.userService.Update(c.Context(), id, &amp;input)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, service.ErrUserNotFound) </span><span class="cov0" title="0">{
+                        return response.NotFound(c, err.Error())
+                }</span>
+                <span class="cov0" title="0">return response.InternalServerError(c, "Failed to update user")</span>
+        }
+
+        <span class="cov0" title="0">return response.Success(c, user)</span>
+}
+
+func (h *UserHandler) Delete(c *fiber.Ctx) error <span class="cov8" title="1">{
+        id := c.Params("id")
+
+        err := h.userService.Delete(c.Context(), id)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, service.ErrUserNotFound) </span><span class="cov0" title="0">{
+                        return response.NotFound(c, err.Error())
+                }</span>
+                <span class="cov0" title="0">return response.InternalServerError(c, "Failed to delete user")</span>
+        }
+
+        <span class="cov8" title="1">return response.NoContent(c)</span>
+}</pre>
+		
+		<pre class="file" id="file6" style="display: none">package middleware
+
+import (
+        "strings"
+
+        "github.com/ariam/my-api/pkg/jwt"
+        "github.com/ariam/my-api/pkg/response"
+        "github.com/gofiber/fiber/v2"
+)
+
+func Auth(jwtManager *jwt.JWTManager) fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                authHeader := c.Get("Authorization")
+                if authHeader == "" </span><span class="cov0" title="0">{
+                        return response.Unauthorized(c, "Missing authorization header")
+                }</span>
+
+                <span class="cov0" title="0">parts := strings.Split(authHeader, " ")
+                if len(parts) != 2 || parts[0] != "Bearer" </span><span class="cov0" title="0">{
+                        return response.Unauthorized(c, "Invalid authorization format")
+                }</span>
+
+                <span class="cov0" title="0">claims, err := jwtManager.Validate(parts[1])
+                if err != nil </span><span class="cov0" title="0">{
+                        return response.Unauthorized(c, err.Error())
+                }</span>
+
+                <span class="cov0" title="0">c.Locals("user_id", claims.UserID)
+                c.Locals("email", claims.Email)
+                c.Locals("role", claims.Role)
+
+                return c.Next()</span>
+        }
+}
+
+func RoleRequired(roles ...string) fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                userRole := c.Locals("role").(string)
+
+                for _, role := range roles </span><span class="cov0" title="0">{
+                        if userRole == role </span><span class="cov0" title="0">{
+                                return c.Next()
+                        }</span>
+                }
+
+                <span class="cov0" title="0">return response.Forbidden(c, "Insufficient permissions")</span>
+        }
+}</pre>
+		
+		<pre class="file" id="file7" style="display: none">package middleware
+
+import (
+        "time"
+
+        "github.com/ariam/my-api/pkg/logger"
+        "github.com/gofiber/fiber/v2"
+        "go.uber.org/zap"
+)
+
+func RequestLogger() fiber.Handler <span class="cov0" title="0">{
+        return func(c *fiber.Ctx) error </span><span class="cov0" title="0">{
+                start := time.Now()
+
+                err := c.Next()
+
+                logger.Info("HTTP Request",
+                        zap.String("request_id", c.GetRespHeader("X-Request-ID")),
+                        zap.String("method", c.Method()),
+                        zap.String("path", c.Path()),
+                        zap.Int("status", c.Response().StatusCode()),
+                        zap.Duration("latency", time.Since(start)),
+                        zap.String("ip", c.IP()),
+                        zap.String("user_agent", c.Get("User-Agent")),
+                )
+
+                return err
+        }</span>
+}</pre>
+		
+		<pre class="file" id="file8" style="display: none">package middleware
+
+import (
+        "time"
+
+        "github.com/gofiber/fiber/v2"
+        "github.com/gofiber/fiber/v2/middleware/cors"
+        "github.com/gofiber/fiber/v2/middleware/helmet"
+        "github.com/gofiber/fiber/v2/middleware/limiter"
+        "github.com/gofiber/fiber/v2/middleware/recover"
+        "github.com/gofiber/fiber/v2/middleware/requestid"
+)
+
+func SetupSecurity(app *fiber.App, env string) <span class="cov0" title="0">{
+        app.Use(recover.New(recover.Config{
+                EnableStackTrace: env == "development",
+        }))
+
+        app.Use(requestid.New())
+
+        app.Use(helmet.New())
+
+        app.Use(cors.New(cors.Config{
+                AllowOrigins:     "*",
+                AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+                AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Request-ID",
+                AllowCredentials: false,
+                MaxAge:           300,
+        }))
+
+        app.Use(limiter.New(limiter.Config{
+                Max:               100,
+                Expiration:        1 * time.Minute,
+                LimiterMiddleware: limiter.SlidingWindow{},
+                KeyGenerator: func(c *fiber.Ctx) string </span><span class="cov0" title="0">{
+                        return c.IP()
+                }</span>,
+                LimitReached: func(c *fiber.Ctx) error <span class="cov0" title="0">{
+                        return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+                                "success": false,
+                                "error":   "Too many requests, please try again later",
+                        })
+                }</span>,
+        }))
+}</pre>
+		
+		<pre class="file" id="file9" style="display: none">package model
+
+import (
+        "time"
+
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type Base struct {
+        ID        uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
+        CreatedAt time.Time      `json:"created_at"`
+        UpdatedAt time.Time      `json:"updated_at"`
+        DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
+}
+
+func (b *Base) BeforeCreate(tx *gorm.DB) error <span class="cov0" title="0">{
+        if b.ID == uuid.Nil </span><span class="cov0" title="0">{
+                b.ID = uuid.New()
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}</pre>
+		
+		<pre class="file" id="file10" style="display: none">package model
+
+type User struct {
+        Base
+        Name     string `json:"name" gorm:"size:100;not null"`
+        Email    string `json:"email" gorm:"size:100;uniqueIndex;not null"`
+        Password string `json:"-" gorm:"size:255;not null"`
+        Role     string `json:"role" gorm:"size:20;default:user"`
+        IsActive bool   `json:"is_active" gorm:"default:true"`
+}
+
+func (User) TableName() string <span class="cov0" title="0">{
+        return "users"
+}</pre>
+		
+		<pre class="file" id="file11" style="display: none">package repository
+
+import (
+        "context"
+
+        "gorm.io/gorm"
+)
+
+type BaseRepository[T any] struct {
+        DB *gorm.DB
+}
+
+func NewBaseRepository[T any](db *gorm.DB) *BaseRepository[T] <span class="cov0" title="0">{
+        return &amp;BaseRepository[T]{DB: db}
+}</span>
+
+func (r *BaseRepository[T]) Create(ctx context.Context, entity *T) error <span class="cov0" title="0">{
+        return r.DB.WithContext(ctx).Create(entity).Error
+}</span>
+
+func (r *BaseRepository[T]) FindByID(ctx context.Context, id string) (*T, error) <span class="cov0" title="0">{
+        var entity T
+        err := r.DB.WithContext(ctx).Where("id = ?", id).First(&amp;entity).Error
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;entity, nil</span>
+}
+
+func (r *BaseRepository[T]) FindAll(ctx context.Context, page, perPage int) ([]T, int64, error) <span class="cov0" title="0">{
+        var entities []T
+        var total int64
+
+        r.DB.WithContext(ctx).Model(new(T)).Count(&amp;total)
+
+        offset := (page - 1) * perPage
+        err := r.DB.WithContext(ctx).Offset(offset).Limit(perPage).Find(&amp;entities).Error
+
+        return entities, total, err
+}</span>
+
+func (r *BaseRepository[T]) Update(ctx context.Context, entity *T) error <span class="cov0" title="0">{
+        return r.DB.WithContext(ctx).Save(entity).Error
+}</span>
+
+func (r *BaseRepository[T]) Delete(ctx context.Context, id string) error <span class="cov0" title="0">{
+        var entity T
+        return r.DB.WithContext(ctx).Where("id = ?", id).Delete(&amp;entity).Error
+}</pre>
+		
+		<pre class="file" id="file12" style="display: none">package repository
+
+import (
+        "context"
+
+        "github.com/ariam/my-api/internal/model"
+        "gorm.io/gorm"
+)
+
+type UserRepository interface {
+        Create(ctx context.Context, user *model.User) error
+        FindByID(ctx context.Context, id string) (*model.User, error)
+        FindByEmail(ctx context.Context, email string) (*model.User, error)
+        FindAll(ctx context.Context, page, perPage int) ([]model.User, int64, error)
+        Update(ctx context.Context, user *model.User) error
+        Delete(ctx context.Context, id string) error
+}
+
+type userRepository struct {
+        *BaseRepository[model.User]
+}
+
+func NewUserRepository(db *gorm.DB) UserRepository <span class="cov0" title="0">{
+        return &amp;userRepository{
+                BaseRepository: NewBaseRepository[model.User](db),
+        }
+}</span>
+
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) <span class="cov0" title="0">{
+        var user model.User
+        err := r.DB.WithContext(ctx).Where("email = ?", email).First(&amp;user).Error
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;user, nil</span>
+}</pre>
+		
+		<pre class="file" id="file13" style="display: none">package router
+
+import (
+        "github.com/ariam/my-api/internal/handler"
+        "github.com/ariam/my-api/internal/middleware"
+        "github.com/ariam/my-api/internal/repository"
+        "github.com/ariam/my-api/internal/service"
+        "github.com/ariam/my-api/pkg/jwt"
+        "github.com/gofiber/fiber/v2"
+        "gorm.io/gorm"
+)
+
+func Setup(app *fiber.App, db *gorm.DB, jwtManager *jwt.JWTManager) <span class="cov0" title="0">{
+        userRepo := repository.NewUserRepository(db)
+
+        userService := service.NewUserService(userRepo)
+        authService := service.NewAuthService(userRepo, jwtManager)
+
+        userHandler := handler.NewUserHandler(userService)
+        authHandler := handler.NewAuthHandler(authService)
+
+        api := app.Group("/api")
+        v1 := api.Group("/v1")
+
+        auth := v1.Group("/auth")
+        auth.Post("/login", authHandler.Login)
+        auth.Get("/me", middleware.Auth(jwtManager), authHandler.Me)
+
+        users := v1.Group("/users")
+        users.Post("/", userHandler.Create)
+        users.Get("/", middleware.Auth(jwtManager), userHandler.FindAll)
+        users.Get("/:id", middleware.Auth(jwtManager), userHandler.FindByID)
+        users.Put("/:id", middleware.Auth(jwtManager), userHandler.Update)
+        users.Delete("/:id", middleware.Auth(jwtManager), middleware.RoleRequired("admin"), userHandler.Delete)
+}</pre>
+		
+		<pre class="file" id="file14" style="display: none">package service
+
+import (
+        "context"
+
+        "github.com/ariam/my-api/internal/repository"
+        "github.com/ariam/my-api/pkg/jwt"
+        "golang.org/x/crypto/bcrypt"
+)
+
+type LoginInput struct {
+        Email    string `json:"email" validate:"required,email"`
+        Password string `json:"password" validate:"required"`
+}
+
+type AuthResponse struct {
+        Token string        `json:"token"`
+        User  *UserResponse `json:"user"`
+}
+
+type AuthService interface {
+        Login(ctx context.Context, input *LoginInput) (*AuthResponse, error)
+}
+
+type authService struct {
+        userRepo   repository.UserRepository
+        jwtManager *jwt.JWTManager
+}
+
+func NewAuthService(userRepo repository.UserRepository, jwtManager *jwt.JWTManager) AuthService <span class="cov0" title="0">{
+        return &amp;authService{
+                userRepo:   userRepo,
+                jwtManager: jwtManager,
+        }
+}</span>
+
+func (s *authService) Login(ctx context.Context, input *LoginInput) (*AuthResponse, error) <span class="cov0" title="0">{
+        user, err := s.userRepo.FindByEmail(ctx, input.Email)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, ErrInvalidCredentials
+        }</span>
+
+        <span class="cov0" title="0">if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil </span><span class="cov0" title="0">{
+                return nil, ErrInvalidCredentials
+        }</span>
+
+        <span class="cov0" title="0">if !user.IsActive </span><span class="cov0" title="0">{
+                return nil, ErrInvalidCredentials
+        }</span>
+
+        <span class="cov0" title="0">token, err := s.jwtManager.Generate(user.ID.String(), user.Email, user.Role)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;AuthResponse{
+                Token: token,
+                User:  toUserResponse(user),
+        }, nil</span>
+}</pre>
+		
+		<pre class="file" id="file15" style="display: none">package service
+
+import (
+        "context"
+        "errors"
+
+        "github.com/ariam/my-api/internal/model"
+        "github.com/ariam/my-api/internal/repository"
+        "golang.org/x/crypto/bcrypt"
+        "gorm.io/gorm"
+)
+
+var (
+        ErrUserNotFound       = errors.New("user not found")
+        ErrEmailAlreadyExists = errors.New("email already exists")
+        ErrInvalidCredentials = errors.New("invalid credentials")
+)
+
+type CreateUserInput struct {
+        Name     string `json:"name" validate:"required,min=2,max=100"`
+        Email    string `json:"email" validate:"required,email"`
+        Password string `json:"password" validate:"required,min=8"`
+}
+
+type UpdateUserInput struct {
+        Name string `json:"name" validate:"omitempty,min=2,max=100"`
+}
+
+type UserResponse struct {
+        ID       string `json:"id"`
+        Name     string `json:"name"`
+        Email    string `json:"email"`
+        Role     string `json:"role"`
+        IsActive bool   `json:"is_active"`
+}
+
+type UserService interface {
+        Create(ctx context.Context, input *CreateUserInput) (*UserResponse, error)
+        FindByID(ctx context.Context, id string) (*UserResponse, error)
+        FindAll(ctx context.Context, page, perPage int) ([]UserResponse, int64, error)
+        Update(ctx context.Context, id string, input *UpdateUserInput) (*UserResponse, error)
+        Delete(ctx context.Context, id string) error
+}
+
+type userService struct {
+        userRepo repository.UserRepository
+}
+
+func NewUserService(userRepo repository.UserRepository) UserService <span class="cov8" title="1">{
+        return &amp;userService{userRepo: userRepo}
+}</span>
+
+func (s *userService) Create(ctx context.Context, input *CreateUserInput) (*UserResponse, error) <span class="cov8" title="1">{
+        existing, _ := s.userRepo.FindByEmail(ctx, input.Email)
+        if existing != nil </span><span class="cov8" title="1">{
+                return nil, ErrEmailAlreadyExists
+        }</span>
+
+        <span class="cov8" title="1">hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">user := &amp;model.User{
+                Name:     input.Name,
+                Email:    input.Email,
+                Password: string(hashedPassword),
+                Role:     "user",
+                IsActive: true,
+        }
+
+        if err := s.userRepo.Create(ctx, user); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return toUserResponse(user), nil</span>
+}
+
+func (s *userService) FindByID(ctx context.Context, id string) (*UserResponse, error) <span class="cov8" title="1">{
+        user, err := s.userRepo.FindByID(ctx, id)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return nil, ErrUserNotFound
+                }</span>
+                <span class="cov0" title="0">return nil, err</span>
+        }
+
+        <span class="cov8" title="1">return toUserResponse(user), nil</span>
+}
+
+func (s *userService) FindAll(ctx context.Context, page, perPage int) ([]UserResponse, int64, error) <span class="cov0" title="0">{
+        users, total, err := s.userRepo.FindAll(ctx, page, perPage)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, 0, err
+        }</span>
+
+        <span class="cov0" title="0">responses := make([]UserResponse, len(users))
+        for i, user := range users </span><span class="cov0" title="0">{
+                responses[i] = *toUserResponse(&amp;user)
+        }</span>
+
+        <span class="cov0" title="0">return responses, total, nil</span>
+}
+
+func (s *userService) Update(ctx context.Context, id string, input *UpdateUserInput) (*UserResponse, error) <span class="cov0" title="0">{
+        user, err := s.userRepo.FindByID(ctx, id)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+                        return nil, ErrUserNotFound
+                }</span>
+                <span class="cov0" title="0">return nil, err</span>
+        }
+
+        <span class="cov0" title="0">if input.Name != "" </span><span class="cov0" title="0">{
+                user.Name = input.Name
+        }</span>
+
+        <span class="cov0" title="0">if err := s.userRepo.Update(ctx, user); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return toUserResponse(user), nil</span>
+}
+
+func (s *userService) Delete(ctx context.Context, id string) error <span class="cov8" title="1">{
+        _, err := s.userRepo.FindByID(ctx, id)
+        if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov8" title="1">{
+                        return ErrUserNotFound
+                }</span>
+                <span class="cov0" title="0">return err</span>
+        }
+
+        <span class="cov8" title="1">return s.userRepo.Delete(ctx, id)</span>
+}
+
+func toUserResponse(user *model.User) *UserResponse <span class="cov8" title="1">{
+        return &amp;UserResponse{
+                ID:       user.ID.String(),
+                Name:     user.Name,
+                Email:    user.Email,
+                Role:     user.Role,
+                IsActive: user.IsActive,
+        }
+}</pre>
+		
+		<pre class="file" id="file16" style="display: none">package jwt
+
+import (
+        "errors"
+        "time"
+
+        "github.com/golang-jwt/jwt/v5"
+)
+
+var (
+        ErrInvalidToken = errors.New("invalid token")
+        ErrExpiredToken = errors.New("token has expired")
+)
+
+type Claims struct {
+        UserID string `json:"user_id"`
+        Email  string `json:"email"`
+        Role   string `json:"role"`
+        jwt.RegisteredClaims
+}
+
+type JWTManager struct {
+        secret      string
+        expireHours int
+}
+
+func NewJWTManager(secret string, expireHours int) *JWTManager <span class="cov8" title="1">{
+        return &amp;JWTManager{
+                secret:      secret,
+                expireHours: expireHours,
+        }
+}</span>
+
+func (m *JWTManager) Generate(userID, email, role string) (string, error) <span class="cov8" title="1">{
+        claims := &amp;Claims{
+                UserID: userID,
+                Email:  email,
+                Role:   role,
+                RegisteredClaims: jwt.RegisteredClaims{
+                        ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(m.expireHours))),
+                        IssuedAt:  jwt.NewNumericDate(time.Now()),
+                },
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+        return token.SignedString([]byte(m.secret))
+}</span>
+
+func (m *JWTManager) Validate(tokenString string) (*Claims, error) <span class="cov8" title="1">{
+        token, err := jwt.ParseWithClaims(tokenString, &amp;Claims{}, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+                        return nil, ErrInvalidToken
+                }</span>
+                <span class="cov8" title="1">return []byte(m.secret), nil</span>
+        })
+
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                if errors.Is(err, jwt.ErrTokenExpired) </span><span class="cov8" title="1">{
+                        return nil, ErrExpiredToken
+                }</span>
+                <span class="cov8" title="1">return nil, ErrInvalidToken</span>
+        }
+
+        <span class="cov8" title="1">claims, ok := token.Claims.(*Claims)
+        if !ok || !token.Valid </span><span class="cov0" title="0">{
+                return nil, ErrInvalidToken
+        }</span>
+
+        <span class="cov8" title="1">return claims, nil</span>
+}</pre>
+		
+		<pre class="file" id="file17" style="display: none">package logger
+
+import (
+        "os"
+        "sync"
+
+        "go.uber.org/zap"
+        "go.uber.org/zap/zapcore"
+)
+
+var (
+        log  *zap.Logger
+        once sync.Once
+)
+
+func Init(env string) <span class="cov0" title="0">{
+        once.Do(func() </span><span class="cov0" title="0">{
+                var config zap.Config
+
+                if env == "production" </span><span class="cov0" title="0">{
+                        config = zap.NewProductionConfig()
+                        config.EncoderConfig.TimeKey = "timestamp"
+                        config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+                }</span> else<span class="cov0" title="0"> {
+                        config = zap.NewDevelopmentConfig()
+                        config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+                }</span>
+
+                <span class="cov0" title="0">var err error
+                log, err = config.Build(zap.AddCallerSkip(1))
+                if err != nil </span><span class="cov0" title="0">{
+                        panic(err)</span>
+                }
+        })
+}
+
+func Get() *zap.Logger <span class="cov0" title="0">{
+        if log == nil </span><span class="cov0" title="0">{
+                Init("development")
+        }</span>
+        <span class="cov0" title="0">return log</span>
+}
+
+func Sync() <span class="cov0" title="0">{
+        if log != nil </span><span class="cov0" title="0">{
+                _ = log.Sync()
+        }</span>
+}
+
+func Info(msg string, fields ...zap.Field) <span class="cov0" title="0">{
+        Get().Info(msg, fields...)
+}</span>
+
+func Error(msg string, fields ...zap.Field) <span class="cov0" title="0">{
+        Get().Error(msg, fields...)
+}</span>
+
+func Debug(msg string, fields ...zap.Field) <span class="cov0" title="0">{
+        Get().Debug(msg, fields...)
+}</span>
+
+func Warn(msg string, fields ...zap.Field) <span class="cov0" title="0">{
+        Get().Warn(msg, fields...)
+}</span>
+
+func Fatal(msg string, fields ...zap.Field) <span class="cov0" title="0">{
+        Get().Fatal(msg, fields...)
+        os.Exit(1)
+}</pre>
+		
+		<pre class="file" id="file18" style="display: none">package response
+
+import "github.com/gofiber/fiber/v2"
+
+type Response struct {
+        Success bool        `json:"success"`
+        Message string      `json:"message,omitempty"`
+        Data    interface{} `json:"data,omitempty"`
+        Error   interface{} `json:"error,omitempty"`
+}
+
+type PaginatedData struct {
+        Items      interface{} `json:"items"`
+        Total      int64       `json:"total"`
+        Page       int         `json:"page"`
+        PerPage    int         `json:"per_page"`
+        TotalPages int         `json:"total_pages"`
+}
+
+func Success(c *fiber.Ctx, data interface{}) error <span class="cov0" title="0">{
+        return c.JSON(Response{
+                Success: true,
+                Data:    data,
+        })
+}</span>
+
+func SuccessWithMessage(c *fiber.Ctx, message string, data interface{}) error <span class="cov0" title="0">{
+        return c.JSON(Response{
+                Success: true,
+                Message: message,
+                Data:    data,
+        })
+}</span>
+
+func Created(c *fiber.Ctx, data interface{}) error <span class="cov0" title="0">{
+        return c.Status(fiber.StatusCreated).JSON(Response{
+                Success: true,
+                Data:    data,
+        })
+}</span>
+
+func NoContent(c *fiber.Ctx) error <span class="cov0" title="0">{
+        return c.SendStatus(fiber.StatusNoContent)
+}</span>
+
+func Error(c *fiber.Ctx, statusCode int, message string) error <span class="cov0" title="0">{
+        return c.Status(statusCode).JSON(Response{
+                Success: false,
+                Error:   message,
+        })
+}</span>
+
+func BadRequest(c *fiber.Ctx, message string) error <span class="cov0" title="0">{
+        return Error(c, fiber.StatusBadRequest, message)
+}</span>
+
+func Unauthorized(c *fiber.Ctx, message string) error <span class="cov0" title="0">{
+        return Error(c, fiber.StatusUnauthorized, message)
+}</span>
+
+func Forbidden(c *fiber.Ctx, message string) error <span class="cov0" title="0">{
+        return Error(c, fiber.StatusForbidden, message)
+}</span>
+
+func NotFound(c *fiber.Ctx, message string) error <span class="cov0" title="0">{
+        return Error(c, fiber.StatusNotFound, message)
+}</span>
+
+func InternalServerError(c *fiber.Ctx, message string) error <span class="cov0" title="0">{
+        return Error(c, fiber.StatusInternalServerError, message)
+}</span>
+
+func ValidationError(c *fiber.Ctx, errors interface{}) error <span class="cov0" title="0">{
+        return c.Status(fiber.StatusUnprocessableEntity).JSON(Response{
+                Success: false,
+                Error:   errors,
+        })
+}</span>
+
+func Paginated(c *fiber.Ctx, items interface{}, total int64, page, perPage int) error <span class="cov0" title="0">{
+        totalPages := int(total) / perPage
+        if int(total)%perPage &gt; 0 </span><span class="cov0" title="0">{
+                totalPages++
+        }</span>
+
+        <span class="cov0" title="0">return c.JSON(Response{
+                Success: true,
+                Data: PaginatedData{
+                        Items:      items,
+                        Total:      total,
+                        Page:       page,
+                        PerPage:    perPage,
+                        TotalPages: totalPages,
+                },
+        })</span>
+}</pre>
+		
+		<pre class="file" id="file19" style="display: none">package validator
+
+import (
+        "reflect"
+        "strings"
+
+        "github.com/go-playground/validator/v10"
+)
+
+type ErrorResponse struct {
+        Field   string `json:"field"`
+        Tag     string `json:"tag"`
+        Message string `json:"message"`
+}
+
+var validate *validator.Validate
+
+func Init() <span class="cov8" title="1">{
+        validate = validator.New()
+
+        validate.RegisterTagNameFunc(func(fld reflect.StructField) string </span><span class="cov8" title="1">{
+                name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+                if name == "-" </span><span class="cov0" title="0">{
+                        return ""
+                }</span>
+                <span class="cov8" title="1">return name</span>
+        })
+}
+
+func Get() *validator.Validate <span class="cov8" title="1">{
+        if validate == nil </span><span class="cov0" title="0">{
+                Init()
+        }</span>
+        <span class="cov8" title="1">return validate</span>
+}
+
+func Validate(data interface{}) []ErrorResponse <span class="cov8" title="1">{
+        var errors []ErrorResponse
+
+        if err := Get().Struct(data); err != nil </span><span class="cov8" title="1">{
+                for _, err := range err.(validator.ValidationErrors) </span><span class="cov8" title="1">{
+                        errors = append(errors, ErrorResponse{
+                                Field:   err.Field(),
+                                Tag:     err.Tag(),
+                                Message: generateMessage(err),
+                        })
+                }</span>
+        }
+
+        <span class="cov8" title="1">return errors</span>
+}
+
+func generateMessage(err validator.FieldError) string <span class="cov8" title="1">{
+        switch err.Tag() </span>{
+        case "required":<span class="cov8" title="1">
+                return err.Field() + " is required"</span>
+        case "email":<span class="cov8" title="1">
+                return err.Field() + " must be a valid email"</span>
+        case "min":<span class="cov8" title="1">
+                return err.Field() + " must be at least " + err.Param() + " characters"</span>
+        case "max":<span class="cov0" title="0">
+                return err.Field() + " must be at most " + err.Param() + " characters"</span>
+        case "eqfield":<span class="cov0" title="0">
+                return err.Field() + " must match " + err.Param()</span>
+        default:<span class="cov0" title="0">
+                return err.Field() + " is invalid"</span>
+        }
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
